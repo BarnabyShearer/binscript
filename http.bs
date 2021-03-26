@@ -1,0 +1,20 @@
+hello: "HTTP/1.1 200 OK" 0d 0a "Content-Length: 15" 0d 0a 0d 0a "Hello from BS" 0d 0a
+desc: 02 00 1f 90 00*12
+sock: 00*8
+conn: 00*8
+recv_len: 00*8
+buf: 00*4096
+loop:
+    accept sock > NULL NULL $
+    conn<
+    recvfrom conn > buf buf* NULL NULL NULL $
+    recv_len<
+    sendto conn > hello hello* NULL NULL NULL $
+    write STDOUT buf recv_len > $
+    loop !
+main:
+    socket INET STREAM NULL $
+    sock<
+    bind sock > desc desc* $
+    listen sock > NULL $
+    loop !

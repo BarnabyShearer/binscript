@@ -1,0 +1,13 @@
+question: "What is your name: "
+buf: 00*32
+read_len: 00*8
+msg: "Hello "
+loop:
+    write STDOUT msg msg* $
+    write STDOUT buf read_len > $
+    loop !
+main:
+    write STDOUT question question* $
+    read STDIN buf buf* $
+    read_len<
+    loop !

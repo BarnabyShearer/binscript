@@ -1,0 +1,17 @@
+filename: 00*8
+fd: 00*8
+buf: 00*8
+len: 00*8
+end:
+    exit OK $
+loop:
+    read fd > buf buf* $
+    len<
+    len > NULL end =
+    write STDOUT buf len > $
+    loop !
+main:
+    | | | | filename<
+    open filename > NULL NULL $
+    fd<
+    loop !
