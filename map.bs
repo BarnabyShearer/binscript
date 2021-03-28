@@ -1,0 +1,65 @@
+_or: 00*8
+or:
+    TRUE _or<
+
+key: 00*8
+value: 00*8
+get_:
+    value > key* + value* + value<
+    NULL _or<
+    value > > key > or =
+    value > > NULL or =
+    _or > NULL get_ =
+get:
+    value > > key > get_ ~
+    value > key* + value<
+setkey: 00*8
+setvalue: 00*8
+set:
+    NULL key<
+    get !
+    value > key* - value<
+    setkey > value[
+    value > key* + value<
+    setvalue > value[
+
+
+data: "key_0001" "a" 0a 00*6 "key_0002" "b" 0a 00*6 "key_0003" "c" 0a 00*6 00*1024
+key1: "key_0001"
+key2: "key_0002"
+key3: "key_0003"
+key4: "key_0004"
+value4: "d" 0a 00*6
+main:
+
+    data value<
+    key1 > key<
+    get !
+    write STDOUT value > value4* $
+
+    data value<
+    key4 > key<
+    get !
+    write STDOUT value > value4* $
+
+    data value<
+    key2 > key<
+    get !
+    write STDOUT value > value4* $
+
+    data value<
+    key4 > setkey<
+    value4 > setvalue<
+    set !
+
+    data value<
+    key3 > key<
+    get !
+    write STDOUT value > value4* $
+
+    data value<
+    key4 > key<
+    get !
+    write STDOUT value > value4* $
+
+    exit OK $

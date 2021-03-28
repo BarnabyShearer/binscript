@@ -18,13 +18,13 @@ MOV_REG = [
     b"\x49\xb9",  # mov r9
 ]
 DEREF = [
-    b"\x48\x8b\x00",  # mov [rax],rax
-    b"\x48\x8b\x3f",  # mov [rdi],rdi
-    b"\x48\x8b\x36",  # mov [rsi],rsi
-    b"\x48\x8b\x12",  # mov [rdx],rdx
-    b"\x49\x89\x12",  # mov [r10],r10
-    b"\x4d\x89\x00",  # mov [r8],r8
-    b"\x4d\x89\x09",  # mov [r9],r9
+    b"\x48\x8b\x00",  # mov rax,[rax]
+    b"\x48\x8b\x3f",  # mov rdi,[rdi]
+    b"\x48\x8b\x36",  # mov rsi,[rsi]
+    b"\x48\x8b\x12",  # mov rdx,[rdx]
+    b"\x4d\x8b\x12",  # mov r10,[r10]
+    b"\x4d\x8b\x00",  # mov r8,[r8]
+    b"\x4d\x8b\x09",  # mov r9,[r9]
 ]
 
 
@@ -34,14 +34,17 @@ def main(src_name: str, dest_name: str) -> None:
         b"NULL": int64(0),
         b"OK": int64(0),
         b"STDIN": int64(0),
+        b"TRUE": int64(1),
         b"STDOUT": int64(1),
         b"INET": int64(2),
+        b"END": int64(2),
         b"STREAM": int64(1),
-        b"CREAT": int64(102), # O_CREAT | O_RDWR
+        b"CREAT": int64(0o1000 + 0o100 + 0o2), # O_TRUNC |O_CREAT | O_RDWR
         # syscalls
         b"read": int64(0),
         b"write": int64(1),
         b"open": int64(2),
+        b"lseek": int64(8),
         b"socket": int64(41),
         b"connect": int64(42),
         b"accept": int64(43),
@@ -69,10 +72,7 @@ def main(src_name: str, dest_name: str) -> None:
             elif c == b" ":
                 if token != b"":
                     dest.write(MOV_REG[i])
-                    if token in refs:
-                        dest.write(refs[token])
-                    else:
-                        dest.write(int64(token))
+                    dest.write(refs[token])
                     i += 1
                     token = b""
             elif c == b"*":
@@ -83,16 +83,20 @@ def main(src_name: str, dest_name: str) -> None:
             elif c == b">":
                 dest.write(DEREF[i - 1])
             elif c == b"+":
-                dest.write(b"\x48\xff\xc0")  # inc rax
-                i = 0
+                dest.write(b"\x48\x01\xf8")  # add rax, rdi
+                i = 1
+            elif c == b"-":
+                dest.write(b"\x48\x29\xf8")  # sub rax, rdi
+                i = 1
             elif c == b"<":
                 dest.write(b"\x48\xA3")  # mov [qword ], rax
                 dest.write(refs[token])
                 token = b""
                 i = 0
             elif c == b"[":
-                dest.write(b"\x49\xb9")  # mov r9
+                dest.write(MOV_REG[6])  # mov r9
                 dest.write(refs[token])
+                dest.write(DEREF[6])  # mov r9,[r9]
                 dest.write(b"\x49\x89\x01")  # mov [r9], rax
                 token = b""
                 i = 0
@@ -116,6 +120,7 @@ def main(src_name: str, dest_name: str) -> None:
                 i = 0
             elif c == b":":
                 dest.write(b"\xc3")  # ret
+                print(token.decode(), "offset", dest.tell())
                 refs[token] = int64(0x08048000 + dest.tell())
                 lens[token] = 0
                 c = src.read(1)
@@ -167,10 +172,6 @@ def main(src_name: str, dest_name: str) -> None:
         dest.write(int64(size))  # p_memsz
         dest.seek(0x7A)
         dest.write(refs[b"main"])  # call main
-        print(
-            "main offset:",
-            int.from_bytes(refs[b"main"], byteorder="little") - 0x08048000,
-        )
     os.chmod(dest_name, 0o777)
 
 if __name__ == "__main__":

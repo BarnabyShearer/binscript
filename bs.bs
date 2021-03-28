@@ -1,0 +1,329 @@
+_or: 00*8
+or:
+    TRUE _or<
+
+key: 00*8
+value: 00*8
+get_:
+    value > key* + value* + value<
+    NULL _or<
+    value > > key > or =
+    value > > NULL or =
+    _or > NULL get_ =
+get:
+    value > > key > get_ ~
+    value > key* + value<
+setkey: 00*8
+setvalue: 00*8
+set:
+    NULL key<
+    get !
+    value > key* - value<
+    setkey > value[
+    value > key* + value<
+    setvalue > value[
+
+forcount: 00*8
+forloops: 00*8
+forloop: 00*8
+for_:
+    forloop > !
+    forcount > TRUE + forcount<
+    forcount > forloops > for_ ~
+for:
+    NULL forcount<
+    forcount > forloops > for_ ~
+
+arr_idx: 00*8
+arr_arr: 00*8
+arr_:
+    arr_idx > arr_idx* + arr_idx<
+arr:
+    arr_idx > forloops<
+    arr_arr > arr_idx<
+    arr_ forloop<
+    for !
+
+int_c: 00*8
+int_: 00*8
+int__: 00*8
+a0: "0" 00*7
+9: 09 00*7
+int___:
+    int_ > int__ > + int_<
+int:
+    int_ > int__<
+    9 > forloops<
+    int___ forloop<
+    for !
+    int_ > int_c > + a0 > - int_<
+
+hex_c_: "0" 00*7 00 00*7 "1" 00*7 01 00*7 "2" 00*7 02 00*7 "3" 00*7 03 00*7 "4" 00*7 04 00*7 "5" 00*7 05 00*7 "6" 00*7 06 00*7 "7" 00*7 07 00*7 "8" 00*7 08 00*7 "9" 00*7 09 00*7 "a" 00*7 0a 00*7 "b" 00*7 0b 00*7 "c" 00*7 0c 00*7 "d" 00*7 0d 00*7 "e" 00*7 0e 00*7 "f" 00*7 0f 00*7
+hex_c: 00*8
+hex_: 00*8
+hex__: 00*8
+15: 0f 00*7
+hex___:
+    hex_ > hex__ > + hex_<
+hex:
+    hex_ > hex__<
+    15 > forloops<
+    hex___ forloop<
+    for !
+
+    hex_c_ value<
+    hex_c > key<
+    get !
+    hex_ > value > > + hex_<
+
+
+org: 00 80 04 08 00*4
+c_space: " " 00*7
+c_len: "*" 00*7
+c_dref: ">" 00*7
+c_add: "+" 00*7
+c_sub: "-" 00*7
+c_store: "<" 00*7
+c_storei: "[" 00*7
+c_pop: "|" 00*7
+c_call: "!" 00*7
+c_syscal: "$" 00*7
+c_je: "=" 00*7
+c_jne: "~" 00*7
+c_def: ":" 00*7
+c_str: 22 00*7
+c_nl: 0a 00*7
+refs: "NULL" 00*12 "OK" 00*14 "STDIN" 00*11 "TRUE" 00*4 01 00*7 "STDOUT" 00*2 01 00*7 "INET" 00*4 02 00*7 "END" 00*5 02 00*7 "STREAM" 00*2 01 00*7 "CREAT" 00*3 42 02 00*6 "read" 00*12 "write" 00*3 01 00*7 "open" 00*4 02 00*7 "lseek" 00*3 08 00*7 "socket" 00*2 29 00*7 "connect" 00 2a 00*7 "accept" 00*2 2b 00*7 "sendto" 00*2 2c 00*7 "recvfrom" 2d 00*7 "bind" 00*4 31 00*7 "listen" 00*2 32 00*7 "exit" 00*4 3c 00*7 00*4096
+lens: 00*4096
+
+src: 00*8
+dest: 00*8
+c: 00*8
+i: 00*8
+token: 00*16
+tokenp: 00*8
+cdone: 00*8
+
+o_mov: 48 b8 00*6 48 bf 00*6 48 be 00*6 48 ba 00*6 49 ba 00*6 49 b8 00*6 49 b9 00*6
+o_movl: 02 00*7
+movreg:
+    o_mov arr_arr<
+    i > arr_idx<
+    arr !
+    write dest > arr_idx > o_movl > $
+o_dref: 48 8b 00 00*5 48 8b 3f 00*5 48 8b 36 00*5 48 8b 12 00*5 4d 8b 12 00*5 4d 8b 00 00*5 4d 8b 09 00*5
+o_refl: 03 00*7
+deref:
+    o_dref arr_arr<
+    i > arr_idx<
+    arr !
+    write dest > arr_idx > o_refl > $
+pref:
+    refs value<
+    token > key<
+    get !
+    write dest > value > value* $
+plen:
+    lens value<
+    token > key<
+    get !
+    write dest > value > value* $
+space_:
+    movreg !
+    pref !
+    NULL token<
+    token tokenp<
+    i > TRUE + i<
+space:
+    TRUE cdone<
+    token tokenp > space_ ~
+getlen:
+    TRUE cdone<
+    movreg !
+    plen !
+    NULL token<
+    token tokenp<
+    i > TRUE + i<
+deref1:
+    TRUE cdone<
+    i > TRUE - i<
+    deref !
+    i > TRUE + i<
+oadd: 48 01 f8
+add:
+    TRUE cdone<
+    write dest > oadd oadd* $
+    TRUE i<
+osub: 48 29 f8
+sub:
+    TRUE cdone<
+    write dest > osub osub* $
+    TRUE i<
+ostore: 48 a3
+store:
+    TRUE cdone<
+    write dest > ostore ostore* $
+    pref !
+    NULL token<
+    token tokenp<
+    NULL i<
+ostorei: 49 89 01
+stor_reg: 06 00*7
+storei:
+    TRUE cdone<
+    stor_reg > i<
+    movreg !
+    pref !
+    deref !
+    write dest > ostorei ostorei* $
+    NULL token<
+    token tokenp<
+    NULL i<
+opop: 58
+pop:
+    TRUE cdone<
+    write dest > opop opop* $
+ocall: ff d0
+call:
+    TRUE cdone<
+    write dest > ocall ocall* $
+    NULL i<
+osyscall: 0f 05
+syscall:
+    TRUE cdone<
+    write dest > osyscall osyscall* $
+    NULL i<
+oje: 48 39 f8 75 02 ff d6
+je:
+    TRUE cdone<
+    write dest > oje oje* $
+    NULL i<
+ojne: 48 39 f8 74 02 ff d6
+jne:
+    TRUE cdone<
+    write dest > ojne ojne* $
+    NULL i<
+def_len: 00*8
+def_str_:
+    write dest > c TRUE $
+    def_len > TRUE + def_len<
+def_str:
+    TRUE cdone<
+    read src > c TRUE $
+    c > c_str > def_str_ ~
+    c > c_str > def_str ~
+byte: 00*8
+mul: 00*8
+def_spc_:
+    write dest > byte TRUE $
+    def_len > TRUE + def_len<
+def_spc:
+    TRUE cdone<
+    mul > forloops<
+    def_spc_ forloop<
+    for !
+    NULL mul<
+    NULL byte<
+def_rep2:
+    mul > int_<
+    c > int_c<
+    int !
+    int_ > mul<
+def_rep_:
+    read src > c TRUE $
+    NULL _or<
+    c > c_space > or =
+    c > c_nl > or =
+    _or > NULL def_rep2 =
+    _or > NULL def_rep_ =
+def_rep:
+    TRUE cdone<
+    NULL mul<
+    def_rep_ !
+def_def:
+    TRUE mul<
+    byte > hex_<
+    c > hex_c<
+    hex !
+    hex_ > byte<
+def_:
+    read src > c TRUE $
+    c > c_str > def_str =
+    c > c_len > def_rep =
+    c > c_space > def_spc =
+    c > c_nl > def_spc =
+    NULL cdone > def_def =
+    NULL cdone<
+    c > c_nl > def_ ~
+oret: c3
+def:
+    write dest > oret oret* $
+    NULL byte<
+    NULL mul<
+    NULL def_len<
+
+    refs value<
+    token > setkey<
+    lseek dest > NULL END $ setvalue<
+    setvalue > org > + setvalue<
+    set !
+
+    def_ !
+    lens value<
+    token > setkey<
+    def_len > setvalue<
+    set !
+    NULL token<
+    token tokenp<
+    TRUE cdone<
+nl:
+    TRUE cdone<
+tokapp:
+    c > tokenp[
+    tokenp > TRUE + tokenp<
+size: 00*8
+filesz: 60 00*7
+callmain: 7a 00*7
+main_tok: "main" 00*4
+end:
+    lseek dest > NULL END $ size<
+    lseek dest > filesz > NULL $
+    write dest > size size* $
+    write dest > size size* $
+    lseek dest > callmain > NULL $
+    main_tok > token<
+    pref !
+    exit OK $
+read_len: 00*8
+loop:
+    read src > c TRUE $ read_len<
+    read_len > NULL end =
+    NULL cdone<
+    c > c_space > space =
+    c > c_len > getlen =
+    c > c_dref > deref1 =
+    c > c_add > add =
+    c > c_sub > sub =
+    c > c_store > store =
+    c > c_storei > storei =
+    c > c_pop > pop =
+    c > c_call > call =
+    c > c_syscal > syscall =
+    c > c_je > je =
+    c > c_jne > jne =
+    c > c_def > def =
+    c > c_nl > nl =
+    NULL cdone > tokapp =
+    loop !
+perm: ff 01 00*6
+elf: 84 00*7
+srcname: 00*8
+destname: 00*8
+main:
+    | | | | srcname<
+    | destname<
+    open srcname > NULL NULL $ src<
+    open destname > CREAT perm > $ dest<
+    write dest > org > elf > $
+    token tokenp<
+    loop !

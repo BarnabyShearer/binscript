@@ -1,8 +1,12 @@
-FROM python as py
-COPY elf.py bs.py greet.bs ./
-RUN ./bs.py greet.bs greet
+FROM python AS py
+COPY elf.py bs.py bs.bs ./
+RUN ./bs.py bs.bs bs
+
+FROM scratch AS bs
+COPY --from=py bs /
+COPY greet.bs /
+RUN ["./bs", "greet.bs", "greet"]
 
 FROM scratch
-COPY --from=py greet /
-
+COPY --from=bs greet /
 ENTRYPOINT ["./greet"]

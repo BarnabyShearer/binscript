@@ -1,0 +1,53 @@
+_or: 00*8
+or:
+    TRUE _or<
+
+key: 00*8
+value: 00*8
+get_:
+    value > key* + value* + value<
+    NULL _or<
+    value > > key > or =
+    value > > NULL or =
+    _or > NULL get_ =
+get:
+    value > > key > get_ ~
+    value > key* + value<
+
+forcount: 00*8
+forloops: 00*8
+forloop: 00*8
+for_:
+    forloop > !
+    forcount > TRUE + forcount<
+    forcount > forloops > for_ ~
+for:
+    NULL forcount<
+    forcount > forloops > for_ ~
+
+hex_c_: "0" 00*7 00 00*7 "1" 00*7 01 00*7 "2" 00*7 02 00*7 "3" 00*7 03 00*7 "4" 00*7 04 00*7 "5" 00*7 05 00*7 "6" 00*7 06 00*7 "7" 00*7 07 00*7 "8" 00*7 08 00*7 "9" 00*7 09 00*7 "a" 00*7 0a 00*7 "b" 00*7 0b 00*7 "c" 00*7 0c 00*7 "d" 00*7 0d 00*7 "e" 00*7 0e 00*7 "f" 00*7 0f 00*7
+hex_c: 00*8
+hex_: 00*8
+hex__: 00*8
+15: 0f 00*7
+hex___:
+    hex_ > hex__ > + hex_<
+hex:
+    hex_ > hex__<
+    15 > forloops<
+    hex___ forloop<
+    for !
+
+    hex_c_ value<
+    hex_c > key<
+    get !
+    hex_ > value > > + hex_<
+
+a4: "4" 00*7
+ad: "d" 00*7
+main:
+    a4 > hex_c<
+    hex !
+    ad > hex_c<
+    hex !
+    exit hex_ > $
