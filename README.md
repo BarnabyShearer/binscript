@@ -1,3 +1,5 @@
-# BinScript
+# binscript
 
-Minimal self hosting Asembler
+Minimal self hosting Asembler.
+
+
